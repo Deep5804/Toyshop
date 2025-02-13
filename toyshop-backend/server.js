@@ -34,12 +34,11 @@
 
 // module.exports = app;
 
-
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const serverless = require("serverless-http"); // Add this for Vercel
+const serverless = require("serverless-http"); // Required for Vercel
 
 dotenv.config(); // Load environment variables
 
@@ -49,12 +48,12 @@ app.use(express.json()); // Middleware to parse JSON data
 
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB Atlas Connected ✅"))
-  .catch((err) => console.error("MongoDB Connection Error:", err));
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB Atlas Connected"))
+  .catch((err) => {
+    console.error("❌ MongoDB Connection Error:", err);
+    process.exit(1);
+  });
 
 app.get("/", (req, res) => {
   res.send("Toy Shop API is Running 🚀");
@@ -64,6 +63,6 @@ app.get("/", (req, res) => {
 const userRoutes = require("./routes/userRoutes");
 app.use("/api/users", userRoutes);
 
-// Export for Vercel (serverless deployment)
+// Export for Vercel (Serverless)
 module.exports = app;
 module.exports.handler = serverless(app);
