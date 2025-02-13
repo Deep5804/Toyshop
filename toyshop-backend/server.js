@@ -34,11 +34,17 @@
 
 // module.exports = app;
 
+
+
+// 
+
+
+
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const serverless = require("serverless-http"); // Required for Vercel
+const serverless = require("serverless-http"); // For Vercel Deployment
 
 dotenv.config(); // Load environment variables
 
@@ -61,7 +67,21 @@ app.get("/", (req, res) => {
 
 // Routes
 const userRoutes = require("./routes/userRoutes");
+const productRoutes = require("./routes/productRoutes");
+
+// Use Routes
 app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
+
+// Set Port
+const PORT = process.env.PORT || 5000;
+
+// Start Server (Only in Local Mode)
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`✅ Server is live on port ${PORT} 🚀`);
+  });
+}
 
 // Export for Vercel (Serverless)
 module.exports = app;
