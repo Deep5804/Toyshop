@@ -8,6 +8,8 @@ const AddressSchema = new mongoose.Schema({
   state: { type: String, required: true },
   postalCode: { type: String, required: true },
   country: { type: String, required: true },
-});
+},
+{ collection: "Address" } // 👈 Force collection name to be "Address"
+);
 
 module.exports = mongoose.model("Address", AddressSchema);

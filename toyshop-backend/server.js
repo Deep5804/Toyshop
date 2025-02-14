@@ -68,10 +68,14 @@ app.get("/", (req, res) => {
 // Routes
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
+const addressRoutes = require("./routes/addressRoutes");
+
 
 // Use Routes
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/address", addressRoutes);
+
 
 // Set Port
 const PORT = process.env.PORT || 5000;
