@@ -69,12 +69,15 @@ app.get("/", (req, res) => {
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const addressRoutes = require("./routes/addressRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+
 
 
 // Use Routes
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/address", addressRoutes);
+app.use("/api/categories", categoryRoutes);
 
 
 // Set Port
