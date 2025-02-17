@@ -7,6 +7,8 @@ const OrderDetailSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   trackingId: { type: String, default: "" },
   trackingPartner: { type: String, default: "" },
-});
+},
+{ collection: "OrderDetails" } // 👈 Force collection name to be "OrderDetails"
+);
 
 module.exports = mongoose.model("OrderDetail", OrderDetailSchema);

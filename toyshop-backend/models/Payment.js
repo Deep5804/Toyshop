@@ -5,6 +5,8 @@ const PaymentSchema = new mongoose.Schema({
   paymentMethod: { type: String, required: true }, // e.g., "Credit Card", "PayPal"
   paymentDate: { type: Date, default: Date.now },
   paymentStatus: { type: String, default: "Pending" }, // "Pending", "Completed", "Failed"
-});
+},
+{ collection: "Payments" } // 👈 Force collection name to be "Payments"
+);
 
 module.exports = mongoose.model("Payment", PaymentSchema);

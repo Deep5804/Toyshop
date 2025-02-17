@@ -70,7 +70,7 @@ const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
-
+const cartRoutes = require("./routes/cartRoutes"); 
 
 
 // Use Routes
@@ -78,6 +78,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/cart", cartRoutes); 
 
 
 // Set Port

@@ -5,6 +5,8 @@ const OrderSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true },
   orderStatus: { type: String, default: "Pending" }, // "Pending", "Shipped", "Delivered"
   orderDate: { type: Date, default: Date.now },
-});
+},
+{ collection: "Orders" } // 👈 Force collection name to be "Orders"
+);
 
 module.exports = mongoose.model("Order", OrderSchema);
