@@ -30,6 +30,7 @@ const addressRoutes = require("./routes/addressRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const cartRoutes = require("./routes/cartRoutes"); 
 const reviewRoutes = require("./routes/reviewRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 
 // Use Routes
@@ -39,6 +40,8 @@ app.use("/api/address", addressRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes); 
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/orders", orderRoutes);
+
 
 
 // Set Port
