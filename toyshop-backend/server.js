@@ -31,6 +31,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const cartRoutes = require("./routes/cartRoutes"); 
 const reviewRoutes = require("./routes/reviewRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const orderDetailRoutes = require("./routes/orderDetailRoutes");
 
 
 // Use Routes
@@ -41,6 +42,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes); 
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/order-details", orderDetailRoutes);
 
 
 
