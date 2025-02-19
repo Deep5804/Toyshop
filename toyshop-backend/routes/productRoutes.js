@@ -6,8 +6,20 @@ const router = express.Router();
 // Create a new product
 router.post("/", async (req, res) => {
   try {
-    const { name, description, price, stock, categoryId } = req.body;
-    const newProduct = new Product({ name, description, price, stock, categoryId });
+    const { name, description, price, stock, categoryId, materialType, productType } = req.body;
+
+    // Check if product with the same name already exists
+    const existingProduct = await Product.findOne({ name });
+    if (existingProduct) {
+      return res.status(400).json({ message: "Product already exists" });
+    }
+
+    // Ensure at least two product types are selected
+    if (!Array.isArray(productType) || productType.length < 2) {
+      return res.status(400).json({ message: "At least two product types must be selected." });
+    }
+
+    const newProduct = new Product({ name, description, price, stock, categoryId, materialType, productType });
     await newProduct.save();
     res.status(201).json({ message: "Product added successfully", newProduct });
   } catch (err) {
@@ -41,6 +53,13 @@ router.get("/:id", async (req, res) => {
 // Update a product by ID
 router.put("/:id", async (req, res) => {
   try {
+    const { productType } = req.body;
+
+    // Ensure at least two product types are selected if updating productType
+    if (productType && (!Array.isArray(productType) || productType.length < 2)) {
+      return res.status(400).json({ message: "At least two product types must be selected." });
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!updatedProduct) {
       return res.status(404).json({ message: "Product not found" });
