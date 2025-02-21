@@ -2,15 +2,17 @@ const mongoose = require("mongoose");
 
 const ProductSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true }, // Name must be unique
+    name: { type: String, required: true, unique: true },
     description: { type: String, required: true },
     price: { type: Number, required: true },
     stock: { type: Number, required: true },
-    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
-    materialType: { type: String, required: true, enum: ["Metal", "Wooden", "Plastic", "Glass", "Other"] }, // New field for material type
-    productType: { type: [String], required: true, enum: ["School", "Office", "Bike", "Car", "Home", "Outdoor", "Other"] } // New field for multiple product types
+    categoryID: { type: String, required: true },
+ // Using manually added categoryID
+    materialType: { type: String, required: true }, // Example: "Metal", "Wooden", etc.
+    productType: { type: [String], required: true }, // Example: ["School", "Office"]
+    imageUrls: { type: [String], required: true } // Multiple images
   },
-  { collection: "Products" } // Ensures data is stored in "Products"
+  { collection: "Products" }
 );
 
 module.exports = mongoose.model("Product", ProductSchema);
