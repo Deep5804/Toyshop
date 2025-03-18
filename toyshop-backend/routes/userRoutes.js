@@ -79,6 +79,7 @@ router.delete("/:id", async (req, res) => {
 
 
 // Login User
+// Login User
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -95,12 +96,22 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid password" });
     }
 
-    // If the password matches, send success message
-    res.json({ message: `Welcome, ${user.name}!` });
+    // Send user data to frontend (excluding password for security)
+    res.json({
+      message: `Welcome, ${user.name}!`,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        address: user.address,
+        phone: user.phone,
+      },
+    });
 
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 module.exports = router;
