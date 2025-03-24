@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
+const upload = require("../utils/upload"); // ✅ Import Multer setup
 
 const router = express.Router();
 
@@ -28,10 +29,10 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// ✅ Create a new product (Only if categoryID exists)
-router.post("/", async (req, res) => {
+// ✅ Create a new product (with image uploads)
+router.post("/", upload.array("images", 5), async (req, res) => {
   try {
-    const { name, description, price, stock, categoryID, materialType, productType, imageUrls } = req.body;
+    const { name, description, price, stock, categoryID, materialType, productType } = req.body;
 
     // ✅ Check if product with the same name already exists
     const existingProduct = await Product.findOne({ name });
@@ -50,10 +51,8 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "At least two product types must be selected." });
     }
 
-    // ✅ Ensure at least one image URL is provided
-    if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
-      return res.status(400).json({ message: "At least one image URL must be provided." });
-    }
+    // ✅ Extract image URLs from Cloudinary response
+    const imageUrls = req.files.map(file => file.path);
 
     // ✅ Create and save the new product
     const newProduct = new Product({
@@ -64,7 +63,7 @@ router.post("/", async (req, res) => {
       categoryID,
       materialType,
       productType,
-      imageUrls
+      imageUrls,
     });
 
     await newProduct.save();
@@ -74,10 +73,10 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ✅ Update a product by ID
-router.put("/:id", async (req, res) => {
+// ✅ Update a product by ID (including image updates)
+router.put("/:id", upload.array("images", 5), async (req, res) => {
   try {
-    const { categoryID, productType, imageUrls } = req.body;
+    const { categoryID, productType } = req.body;
 
     // ✅ Check if categoryID exists if provided
     if (categoryID) {
@@ -92,15 +91,22 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ message: "At least two product types must be selected." });
     }
 
-    // ✅ Ensure at least one image URL is provided if updating imageUrls
-    if (imageUrls && (!Array.isArray(imageUrls) || imageUrls.length === 0)) {
-      return res.status(400).json({ message: "At least one image URL must be provided." });
+    // ✅ Extract image URLs from Cloudinary response (if new images are uploaded)
+    let imageUrls;
+    if (req.files.length > 0) {
+      imageUrls = req.files.map(file => file.path);
     }
 
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, ...(imageUrls && { imageUrls }) }, // ✅ Only update imageUrls if new images are uploaded
+      { new: true, runValidators: true }
+    );
+
     if (!updatedProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
+
     res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
   } catch (err) {
     res.status(500).json({ error: err.message });
