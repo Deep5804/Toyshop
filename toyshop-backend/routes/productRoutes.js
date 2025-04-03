@@ -1,11 +1,9 @@
 const express = require("express");
-const mongoose = require("mongoose");
+const router = express.Router();
 const Product = require("../models/Product");
 const Category = require("../models/Category");
-const upload = require("../utils/upload"); // ✅ Import Multer setup
-
-const router = express.Router();
-
+const upload = require("../utils/upload");
+const mongoose = require("mongoose");
 // ✅ Get all products
 router.get("/", async (req, res) => {
   try {
@@ -20,106 +18,102 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
     res.status(200).json(product);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ Create a new product (with image uploads)
-router.post("/", upload.array("images", 5), async (req, res) => {
+// ✅ Get all products in a specific subcategory
+router.get("/subcategory/:subcategoryID", async (req, res) => {
   try {
-    const { name, description, price, stock, categoryID, materialType, productType } = req.body;
+    const category = await Category.findOne({ "subcategories.subcategoryID": req.params.subcategoryID })
+      .populate("subcategories.products");
 
-    // ✅ Check if product with the same name already exists
-    const existingProduct = await Product.findOne({ name });
-    if (existingProduct) {
-      return res.status(400).json({ message: "Product already exists" });
-    }
+    if (!category) return res.status(404).json({ message: "Subcategory not found" });
 
-    // ✅ Check if the provided categoryID exists in Categories collection
-    const categoryExists = await Category.findOne({ categoryID });
-    if (!categoryExists) {
-      return res.status(400).json({ message: "Category does not exist. Please provide a valid categoryID." });
-    }
-
-    // ✅ Ensure at least two product types are selected
-    if (!Array.isArray(productType) || productType.length < 2) {
-      return res.status(400).json({ message: "At least two product types must be selected." });
-    }
-
-    // ✅ Extract image URLs from Cloudinary response
-    const imageUrls = req.files.map(file => file.path);
-
-    // ✅ Create and save the new product
-    const newProduct = new Product({
-      name,
-      description,
-      price,
-      stock,
-      categoryID,
-      materialType,
-      productType,
-      imageUrls,
-    });
-
-    await newProduct.save();
-    res.status(201).json({ message: "Product added successfully", product: newProduct });
+    const subcategory = category.subcategories.find(sub => sub.subcategoryID === req.params.subcategoryID);
+    res.status(200).json(subcategory.products);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ Update a product by ID (including image updates)
+// ✅ Create a new product (assign to subcategory)
+router.post("/", upload.array("images", 5), async (req, res) => {
+  try {
+    const { name, description, price, stock, materialType, productType, categoryID, subcategoryID } = req.body;
+
+    // ✅ Find category and subcategory
+    const category = await Category.findOne({ categoryID });
+    if (!category) return res.status(400).json({ message: "Category not found." });
+
+    const subcategory = category.subcategories.find(sub => sub.subcategoryID === subcategoryID);
+    if (!subcategory) return res.status(400).json({ message: "Subcategory not found." });
+
+    // ✅ Create product
+    const imageUrls = req.files.map(file => file.path);
+    const newProduct = new Product({ name, description, price, stock, materialType, productType, imageUrls });
+
+    await newProduct.save();
+
+    // ✅ Assign product to subcategory
+    subcategory.products.push(newProduct._id);
+    await category.save();
+
+    res.status(201).json({ message: "Product added successfully!", product: newProduct });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.put("/:id", upload.array("images", 5), async (req, res) => {
   try {
-    const { categoryID, productType } = req.body;
+    const { categoryID, subcategoryID, ...updateFields } = req.body; // Extract categoryID, subcategoryID separately
 
-    // ✅ Check if categoryID exists if provided
-    if (categoryID) {
-      const categoryExists = await Category.findOne({ categoryID });
-      if (!categoryExists) {
-        return res.status(400).json({ message: "Category does not exist. Please provide a valid categoryID." });
-      }
+    // ✅ Validate Product ID
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid Product ID format" });
     }
 
-    // ✅ Ensure at least two product types are selected if updating productType
-    if (productType && (!Array.isArray(productType) || productType.length < 2)) {
-      return res.status(400).json({ message: "At least two product types must be selected." });
+    // ✅ Validate category and subcategory only if provided
+    if (categoryID && subcategoryID) {
+      const category = await Category.findOne({ categoryID });
+      if (!category) return res.status(400).json({ message: "Category not found." });
+
+      const subcategory = category.subcategories?.find(sub => sub.subcategoryID === subcategoryID);
+      if (!subcategory) return res.status(400).json({ message: "Subcategory not found." });
     }
 
-    // ✅ Extract image URLs from Cloudinary response (if new images are uploaded)
-    let imageUrls;
-    if (req.files.length > 0) {
-      imageUrls = req.files.map(file => file.path);
+    // ✅ Handle image update only if new images are uploaded
+    if (req.files && req.files.length > 0) {
+      updateFields.imageUrls = req.files.map(file => file.path);
     }
 
+    // ✅ Update product with only the given fields
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, ...(imageUrls && { imageUrls }) }, // ✅ Only update imageUrls if new images are uploaded
+      { $set: updateFields }, // Update only provided fields
       { new: true, runValidators: true }
     );
 
-    if (!updatedProduct) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
 
     res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Update Product Error:", err); // Log error for debugging
+    res.status(500).json({ message: "Error updating product", error: err.message });
   }
 });
-
+ 
 // ✅ Delete a product by ID
 router.delete("/:id", async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
-    if (!deletedProduct) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    if (!deletedProduct) return res.status(404).json({ message: "Product not found" });
+
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
