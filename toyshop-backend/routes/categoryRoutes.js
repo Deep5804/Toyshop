@@ -3,11 +3,11 @@ const router = express.Router();
 const Category = require("../models/Category");
 
 // ✅ Create a new category
+// ✅ Create a new category (now supports subcategories)
 router.post("/add", async (req, res) => {
   try {
-    const { categoryID, categoryName, isRemoteControl } = req.body;
+    const { categoryID, categoryName, isRemoteControl, subcategories } = req.body;
 
-    // Check if category ID or name already exists
     if (await Category.findOne({ categoryID })) {
       return res.status(400).json({ message: "Category ID already exists" });
     }
@@ -15,7 +15,13 @@ router.post("/add", async (req, res) => {
       return res.status(400).json({ message: "Category name already exists" });
     }
 
-    const newCategory = new Category({ categoryID, categoryName, isRemoteControl, subcategories: [] });
+    const newCategory = new Category({
+      categoryID,
+      categoryName,
+      isRemoteControl,
+      subcategories: subcategories || []
+    });
+
     await newCategory.save();
 
     res.status(201).json({ message: "Category added successfully!", category: newCategory });
@@ -23,6 +29,7 @@ router.post("/add", async (req, res) => {
     res.status(500).json({ message: "Error adding category", error });
   }
 });
+
 
 // ✅ Add a subcategory to a category
 router.post("/add-subcategory/:categoryID", async (req, res) => {
@@ -67,6 +74,50 @@ router.get("/:categoryID", async (req, res) => {
     res.status(500).json({ message: "Error fetching category", error });
   }
 });
+
+// Update a category
+router.put("/update/:categoryID", async (req, res) => {
+  try {
+    const { categoryName, isRemoteControl } = req.body;
+
+    const updatedCategory = await Category.findOneAndUpdate(
+      { categoryID: req.params.categoryID },
+      { categoryName, isRemoteControl },
+      { new: true }
+    );
+
+    if (!updatedCategory) return res.status(404).json({ message: "Category not found" });
+
+    res.json({ message: "Category updated successfully!", category: updatedCategory });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating category", error });
+  }
+});
+ 
+// Update a subcategory
+router.put("/update-subcategory/:categoryID/:subcategoryID", async (req, res) => {
+  try {
+    const { subcategoryName } = req.body;
+
+    const category = await Category.findOne({ categoryID: req.params.categoryID });
+    if (!category) return res.status(404).json({ message: "Category not found" });
+
+    const subcategory = category.subcategories.find(
+      sub => sub.subcategoryID === req.params.subcategoryID
+    );
+    if (!subcategory) return res.status(404).json({ message: "Subcategory not found" });
+
+    // Update subcategory fields
+    subcategory.subcategoryName = subcategoryName || subcategory.subcategoryName;
+
+    await category.save();
+
+    res.json({ message: "Subcategory updated successfully!", category });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating subcategory", error });
+  }
+});
+
 
 // ✅ Delete a category (and its subcategories)
 router.delete("/delete/:categoryID", async (req, res) => {
