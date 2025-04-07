@@ -131,4 +131,30 @@ router.delete("/delete/:categoryID", async (req, res) => {
   }
 });
 
+// Delete a subcategory from a category
+router.delete("/delete-subcategory/:categoryID/:subcategoryID", async (req, res) => {
+  try {
+    const { categoryID, subcategoryID } = req.params;
+
+    const category = await Category.findOne({ categoryID });
+    if (!category) return res.status(404).json({ message: "Category not found" });
+
+    const initialLength = category.subcategories.length;
+
+    category.subcategories = category.subcategories.filter(
+      sub => sub.subcategoryID !== subcategoryID
+    );
+
+    if (category.subcategories.length === initialLength) {
+      return res.status(404).json({ message: "Subcategory not found" });
+    }
+
+    await category.save();
+
+    res.json({ message: "Subcategory deleted successfully!", category });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting subcategory", error });
+  }
+});
+
 module.exports = router;
