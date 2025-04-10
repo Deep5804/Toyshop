@@ -345,13 +345,8 @@ router.get("/", async (req, res) => {
 });
 
 // Get Single User by ID (Protected route)
-router.get("/add/:id", authenticateToken, async (req, res) => {
+router.get("/add/:id", async (req, res) => {
   try {
-    if (req.user.id !== req.params.id) {
-      console.log("hello9876");
-      return res.status(403).json({ error: "Unauthorized access" });
-    }
-
     const user = await User.findById(req.params.id).select("-password");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
