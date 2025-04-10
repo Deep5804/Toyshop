@@ -8,7 +8,10 @@ const ReviewSchema = new mongoose.Schema(
     comment: { type: String, required: true },
     images: { type: [String], default: [] }, // Allow multiple images
   },
-  { collection: "Reviews" } // Force collection name to be "Reviews"
+  {
+    collection: "Reviews", // Force collection name to be "Reviews"
+    timestamps: true       // ✅ This enables createdAt and updatedAt
+  }
 );
 
 module.exports = mongoose.model("Review", ReviewSchema);
