@@ -78,6 +78,22 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// ✅ Get a single contact message by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const message = await ContactUs.findById(id);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found." });
+    }
+
+    res.status(200).json({ success: true, message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ✅ Update contact message action (pending/accepted/rejected)
 router.put("/:id/action", async (req, res) => {
