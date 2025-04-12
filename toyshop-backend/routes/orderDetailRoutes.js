@@ -194,6 +194,7 @@ const OrderDetail = require("../models/OrderDetail");
 
 const router = express.Router();
 
+
 // 🔹 Create OrderDetail
 router.post("/", async (req, res) => {
   try {
@@ -203,11 +204,19 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "OrderId is required" });
     }
 
+    // Check if the order already has an OrderDetail
+    const existingOrderDetail = await OrderDetail.findOne({ orderId });
+    if (existingOrderDetail) {
+      return res.status(400).json({ message: "An OrderDetail already exists for this Order ID" });
+    }
+
+    // Check if the order exists in the database
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ message: "Invalid Order ID" });
     }
 
+    // Create new OrderDetail if no existing OrderDetail found for the Order ID
     const newOrderDetail = new OrderDetail({
       orderId,
       trackingId,
