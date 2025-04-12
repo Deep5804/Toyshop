@@ -53,6 +53,25 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Get payments by orderId
+router.get("/order/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // Fetch payments related to the orderId
+    const payments = await Payment.find({ orderId }).populate("userId orderId");
+
+    if (payments.length === 0) {
+      return res.status(404).json({ message: "No payments found for this order" });
+    }
+
+    res.status(200).json(payments);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching payments by orderId", error });
+  }
+});
+
+
 // Update a payment by ID
 router.put("/:id", async (req, res) => {
   try {

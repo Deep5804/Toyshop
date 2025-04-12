@@ -120,6 +120,24 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Get address by orderId
+router.get("/order/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // Fetch address related to the orderId
+    const address = await Address.find({ orderId }).populate("orderId");
+
+    if (address.length === 0) {
+      return res.status(404).json({ message: "No address found for this order" });
+    }
+
+    res.status(200).json(address);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching address by orderId", error });
+  }
+});
+
 // ✅ Update an address
 router.put("/update/:id", async (req, res) => {
   try {
