@@ -38,6 +38,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const newsletterRoutes = require("./routes/newsletterRoutes");
 
 
+
 // Use Routes
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
