@@ -119,14 +119,20 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ message: "Error fetching address", error });
   }
 });
-
-// Get address by orderId
+// 🔹 Get address by orderId
+// 🔹 Get address by orderId
 router.get("/order/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
 
+    // Validate that orderId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ message: "Invalid Order ID format" });
+    }
+
     // Fetch address related to the orderId
-    const address = await Address.find({ orderId }).populate("orderId");
+    const address = await Address.find({ orderId })
+      .populate("orderId");  // Ensure that 'orderId' references the Order model
 
     if (address.length === 0) {
       return res.status(404).json({ message: "No address found for this order" });
@@ -134,10 +140,10 @@ router.get("/order/:orderId", async (req, res) => {
 
     res.status(200).json(address);
   } catch (error) {
+    console.error("Error fetching address:", error);
     res.status(500).json({ message: "Error fetching address by orderId", error });
   }
 });
-
 // ✅ Update an address
 router.put("/update/:id", async (req, res) => {
   try {
