@@ -36,6 +36,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const contactUsRoutes = require("./routes/contactUsRoutes"); 
 const uploadRoutes = require("./routes/uploadRoutes");
 const newsletterRoutes = require("./routes/newsletterRoutes");
+const searchRoutes = require("./routes/searchRoutes");
 
 
 
@@ -52,6 +53,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/contact", contactUsRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/newsletter", newsletterRoutes);
+app.use("/api/search", searchRoutes);
 
 
 

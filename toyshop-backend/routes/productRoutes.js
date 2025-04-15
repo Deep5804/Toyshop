@@ -200,22 +200,80 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-router.get("/search", async (req, res) => {
+// Search endpoint with prioritized fields
+router.get("/search/search", async (req, res) => {
   try {
+    console.log("Hit /search/search with query:", req.query);
     const { name, page = 1, limit = 10 } = req.query;
     if (!name) {
       return res.status(400).json({ message: "Query parameter 'name' is required" });
     }
 
-    const query = {
-      name: { $regex: name, $options: "i" }, // Case-insensitive partial match
-    };
+    const keywords = name.trim().split(/\s+/); // Split into individual keywords
+    const regexQueries = keywords.map(keyword => ({
+      $regex: keyword,
+      $options: "i" // Case-insensitive
+    }));
 
-    const products = await Product.find(query)
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-    const total = await Product.countDocuments(query);
+    // Create queries for each field
+    const nameQuery = { name: { $in: regexQueries } };
+    const descriptionQuery = { description: { $in: regexQueries } };
+    const materialTypeQuery = { materialType: { $in: regexQueries } };
+
+    // Aggregate to prioritize name > description > materialType
+    const products = await Product.aggregate([
+      {
+        $addFields: {
+          // Assign priority scores based on field matches
+          priority: {
+            $cond: {
+              if: { $in: ["$name", regexQueries.map(q => q.$regex)] },
+              then: 3, // Highest priority for name
+              else: {
+                $cond: {
+                  if: { $in: ["$description", regexQueries.map(q => q.$regex)] },
+                  then: 2, // Medium priority for description
+                  else: {
+                    $cond: {
+                      if: { $in: ["$materialType", regexQueries.map(q => q.$regex)] },
+                      then: 1, // Lowest priority for materialType
+                      else: 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        $match: {
+          $or: [
+            nameQuery,
+            descriptionQuery,
+            materialTypeQuery
+          ],
+          priority: { $gt: 0 } // Only include matches
+        }
+      },
+      { $sort: { priority: -1, name: 1 } }, // Sort by priority (desc), then name
+      { $skip: (page - 1) * limit },
+      { $limit: parseInt(limit) },
+      {
+        $project: {
+          priority: 0 // Exclude priority field from response
+        }
+      }
+    ]);
+
+    // Count total matching documents
+    const total = await Product.countDocuments({
+      $or: [
+        nameQuery,
+        descriptionQuery,
+        materialTypeQuery
+      ]
+    });
 
     res.status(200).json({
       products,
@@ -224,7 +282,7 @@ router.get("/search", async (req, res) => {
       pages: Math.ceil(total / limit) || 1,
     });
   } catch (err) {
-    console.error("Error searching products:", err);
+    console.error("Error in /search/search:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
