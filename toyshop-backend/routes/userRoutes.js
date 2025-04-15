@@ -388,31 +388,92 @@ router.get("/profile", authenticateToken, async (req, res) => {
 });
 
 // Update User by ID (Protected route)
+// router.put("/:id", authenticateToken, async (req, res) => {
+//   try {
+//     const { name, email, address, phone, password } = req.body;
+
+//     if (req.user.id !== req.params.id) {
+//       return res.status(403).json({ error: "Unauthorized access" });
+//     }
+
+//     const updateData = { name, email, address, phone };
+//     if (password) {
+//       updateData.password = await bcrypt.hash(password, 10);
+//     }
+
+//     const updatedUser = await User.findByIdAndUpdate(
+//       req.params.id,
+//       updateData,
+//       { new: true, runValidators: true }
+//     ).select("-password");
+
+//     if (!updatedUser) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     res.json({ message: "User updated successfully", updatedUser });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 router.put("/:id", authenticateToken, async (req, res) => {
   try {
-    const { name, email, address, phone, password } = req.body;
+    const {
+      name,
+      email,
+      address,
+      phone,
+      firstname,
+      lastname,
+      city,
+      state,
+      country,
+      pincode,
+      password,
+    } = req.body;
+
+    console.log("PUT /:id - Received data:", req.body); // Debug log
 
     if (req.user.id !== req.params.id) {
+      console.log("Unauthorized: User ID mismatch", req.user.id, req.params.id);
       return res.status(403).json({ error: "Unauthorized access" });
     }
 
-    const updateData = { name, email, address, phone };
+    const updateData = {
+      name,
+      email,
+      address,
+      phone,
+      firstname,
+      lastname,
+      city,
+      state,
+      country,
+      pincode,
+    };
+
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }
 
+    // Remove undefined fields to avoid overwriting with undefined
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      { $set: updateData },
       { new: true, runValidators: true }
     ).select("-password");
 
     if (!updatedUser) {
+      console.log("User not found for ID:", req.params.id);
       return res.status(404).json({ error: "User not found" });
     }
 
+    console.log("Updated user:", updatedUser); // Debug log
     res.json({ message: "User updated successfully", updatedUser });
   } catch (err) {
+    console.error("PUT /:id error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
