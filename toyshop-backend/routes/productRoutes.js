@@ -221,14 +221,12 @@ router.get("/search", async (req, res) => {
       products,
       total,
       page: parseInt(page),
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil(total / limit) || 1,
     });
   } catch (err) {
     console.error("Error searching products:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
-
-module.exports = router;
 
 module.exports = router;
