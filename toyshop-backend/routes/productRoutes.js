@@ -201,4 +201,34 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+router.get("/search", async (req, res) => {
+  try {
+    const { name, page = 1, limit = 10 } = req.query;
+    if (!name) {
+      return res.status(400).json({ message: "Query parameter 'name' is required" });
+    }
+
+    const query = {
+      name: { $regex: name, $options: "i" }, // Case-insensitive partial match
+    };
+
+    const products = await Product.find(query)
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    const total = await Product.countDocuments(query);
+
+    res.status(200).json({
+      products,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit),
+    });
+  } catch (err) {
+    console.error("Error searching products:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+module.exports = router;
+
 module.exports = router;
