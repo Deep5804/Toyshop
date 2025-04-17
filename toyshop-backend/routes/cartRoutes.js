@@ -303,11 +303,17 @@ router.put("/:userId", async (req, res) => {
       cart = new Cart({ userId, items });
     } else {
       // Replace all existing items with new items
-      cart.items = items;
+      cart.items = items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price
+      }));
     }
 
     await cart.save();
-    res.json({ message: "Cart updated successfully", cart });
+    // Populate product details in the response
+    const updatedCart = await Cart.findOne({ userId }).populate("items.productId");
+    res.json({ message: "Cart updated successfully", cart: updatedCart });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
