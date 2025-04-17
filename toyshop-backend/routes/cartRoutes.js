@@ -143,35 +143,70 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Update item quantity in cart
-router.put("/:userId/:productId", async (req, res) => {
-  try {
-    const { userId, productId } = req.params;
-    const { quantity } = req.body;
+// // Update item quantity in cart
+// router.put("/:userId/:productId", async (req, res) => {
+//   try {
+//     const { userId, productId } = req.params;
+//     const { quantity } = req.body;
 
-    if (quantity < 1) {
-      return res.status(400).json({ message: "Quantity must be at least 1" });
+//     if (quantity < 1) {
+//       return res.status(400).json({ message: "Quantity must be at least 1" });
+//     }
+
+//     let cart = await Cart.findOne({ userId });
+//     if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+//     const itemIndex = cart.items.findIndex(
+//       (item) => item.productId.toString() === productId
+//     );
+
+//     if (itemIndex > -1) {
+//       cart.items[itemIndex].quantity = quantity;
+//       await cart.save();
+//       res.json({ message: "Item quantity updated", cart });
+//     } else {
+//       res.status(404).json({ message: "Item not found in cart" });
+//     }
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error", error });
+//   }
+// });
+
+
+
+// Update cart by user ID (replaces all items)
+router.put("/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { items } = req.body;
+
+    // Validate items array
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "Items array is required and cannot be empty" });
+    }
+
+    // Validate each item
+    for (const item of items) {
+      if (!item.productId || !item.quantity || item.quantity < 1 || !item.price) {
+        return res.status(400).json({ message: "Each item must have a valid productId, quantity (at least 1), and price" });
+      }
     }
 
     let cart = await Cart.findOne({ userId });
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
-
-    const itemIndex = cart.items.findIndex(
-      (item) => item.productId.toString() === productId
-    );
-
-    if (itemIndex > -1) {
-      cart.items[itemIndex].quantity = quantity;
-      await cart.save();
-      res.json({ message: "Item quantity updated", cart });
+    if (!cart) {
+      // Create new cart if none exists
+      cart = new Cart({ userId, items });
     } else {
-      res.status(404).json({ message: "Item not found in cart" });
+      // Replace all existing items with new items
+      cart.items = items;
     }
+
+    await cart.save();
+    res.json({ message: "Cart updated successfully", cart });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
 });
-
 // Remove item from cart
 router.delete("/:userId/:productId", async (req, res) => {
   try {
